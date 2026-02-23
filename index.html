@@ -94,6 +94,30 @@ body {
 .show {
   opacity: 1;
 }
+
+/* ✅ Confirmation Check Styling */
+#confirmationCheck {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 180px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Bounce animation */
+@keyframes bouncePop {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  50%  { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
+  70%  { transform: translate(-50%, -50%) scale(0.95); }
+  85%  { transform: translate(-50%, -50%) scale(1.05); }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+#confirmationCheck.showCheck {
+  animation: bouncePop 0.6s ease forwards;
+}
 </style>
 </head>
 <body>
@@ -122,6 +146,9 @@ body {
 
 <div id="thankYou">Thank you for your feedback!</div>
 
+<!-- ✅ Large Green Check -->
+<div id="confirmationCheck">✅</div>
+
 <script>
 // Replace this with your Google Apps Script Web App URL
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLCSIUkSFwn2DaryNYcE3rGE6-QcbXnSV0zsuf7mgE5FMluvSZXXsgUKMU2G2pRv1T/exec";
@@ -131,14 +158,14 @@ function getCurrentMeal() {
   const now = new Date();
   const totalMinutes = now.getHours() * 60 + now.getMinutes();
 
-  const breakfastStart = 7 * 60;           // 7:00 AM
-  const breakfastEnd = 11 * 60 + 59;       // 11:59 AM
+  const breakfastStart = 7 * 60;
+  const breakfastEnd = 11 * 60 + 59;
 
-  const americanStart = 12 * 60;           // 12:00 PM
-  const americanEnd = 17 * 60 + 29;        // 5:29 PM
+  const americanStart = 12 * 60;
+  const americanEnd = 17 * 60 + 29;
 
-  const dinnerStart = 17 * 60 + 30;        // 5:30 PM
-  const dinnerEnd = 21 * 60;               // 9:00 PM
+  const dinnerStart = 17 * 60 + 30;
+  const dinnerEnd = 21 * 60;
 
   if (totalMinutes >= breakfastStart && totalMinutes <= breakfastEnd) {
     return "Breakfast";
@@ -154,24 +181,22 @@ function getCurrentMeal() {
   }
 }
 
-// Update the header dynamically
+// Update header dynamically
 function setMealHeader() {
   const header = document.getElementById("mealHeader");
   const meal = getCurrentMeal();
   header.textContent = meal === "Closed" ? "KISS Culinary" : meal;
 }
 
-// Run immediately and update every minute
 setMealHeader();
 setInterval(setMealHeader, 60000);
 
-// Send both meal type and feedback to Google Sheet
+// Handle feedback clicks
 document.querySelectorAll(".circle").forEach(button => {
   button.addEventListener("click", function () {
     const value = this.dataset.value;
     const mealType = getCurrentMeal();
 
-    // Do not allow feedback when closed
     if (mealType === "Closed") return;
 
     this.classList.add("selected");
@@ -186,11 +211,17 @@ document.querySelectorAll(".circle").forEach(button => {
     });
 
     const thankYou = document.getElementById("thankYou");
+    const check = document.getElementById("confirmationCheck");
+
     thankYou.classList.add("show");
+    check.classList.remove("showCheck"); // reset animation
+    void check.offsetWidth; // force reflow
+    check.classList.add("showCheck");
 
     setTimeout(() => {
       this.classList.remove("selected");
       thankYou.classList.remove("show");
+      check.classList.remove("showCheck");
     }, 2000);
   });
 });
